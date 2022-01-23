@@ -1,0 +1,355 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-04-9a47f32fcf47.
+Use “gcloud config set project [PROJECT_ID]” to change to a different project.
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud config set compute/zone us-east1-b
+Updated property [compute/zone].
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud config set project qwiklabs-gcp-04-9a47f32fcf47
+Updated property [core/project].
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> prod-network.jinja << EOF
+> resources:
+> {# Network #}
+> - name: kraken-prod-vpc
+>   type: gcp-types/compute-v1:networks
+>   properties:
+>     description: "Kraken Production VPC"
+>     autoCreateSubnetworks: false
+>
+> {# Subnet #}
+> - name: kraken-prod-subnet
+>   type: gcp-types/compute-v1:subnetworks
+>   properties:
+>     ipCidrRange: 192.168.12.0/24
+>     network: \$(ref.kraken-prod-vpc.selfLink)
+>     region: {{ properties['region'] }}
+>     privateIpGoogleAccess: true
+>     enableFlowLogs: true
+>     logConfig:
+>       enable: true
+>       flowSampling: 1
+>
+> {# Firewall Rule #}
+> - name: kraken-prod-fw-ssh
+>   type: gcp-types/compute-v1:firewalls
+>   properties:
+>     network: projects/{{ env['project'] }}/global/networks/kraken-prod-vpc
+>     sourceRanges: [35.235.240.0/20]
+>     priority: 100
+>     allowed:
+>     - IPProtocol: tcp
+>       ports: [22]
+>     targetTags:
+>     - ssh-ingress
+>   metadata:
+>     dependsOn:
+>     - kraken-prod-vpc
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> prod-network.yaml << EOF
+> imports:
+> - path: prod-network.jinja
+>
+> resources:
+> - name: prod-network
+>   type: prod-network.jinja
+>   properties:
+>     region: us-east1
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud deployment-manager deployments create advanced-configuration --config prod-network.yaml
+The fingerprint of the deployment is b'4irHXAFlcj7L_niKz5JzZg=='
+Waiting for create [operation-1642947797236-5d64097d6ba31-2922ee8a-0edc33e8]...done.     
+Create operation operation-1642947797236-5d64097d6ba31-2922ee8a-0edc33e8 completed successfully.
+NAME: kraken-prod-fw-ssh
+TYPE: gcp-types/compute-v1:firewalls
+STATE: COMPLETED
+ERRORS: []
+INTENT:
+
+NAME: kraken-prod-subnet
+TYPE: gcp-types/compute-v1:subnetworks
+STATE: COMPLETED
+ERRORS: []
+INTENT:
+
+NAME: kraken-prod-vpc
+TYPE: gcp-types/compute-v1:networks
+STATE: COMPLETED
+ERRORS: []
+INTENT:
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud container clusters create kraken-prod-109 --num-nodes 2 --zone us-east1-b --network kraken-prod-vpc --subnetwork kraken-prod-subnet
+Default change: VPC-native is the default mode during cluster creation for versions greater than 1.21.0-gke.1500. To create advanced routes based clusters, please pass the `--no-enable-ip-alias` flag
+Note: Your Pod address range (`--cluster-ipv4-cidr`) can accommodate at most 1008 node(s).
+Creating cluster kraken-prod-109 in us-east1-b...done.     
+Created [https://container.googleapis.com/v1/projects/qwiklabs-gcp-04-9a47f32fcf47/zones/us-east1-b/clusters/kraken-prod-109].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/us-east1-b/kraken-prod-109?project=qwiklabs-gcp-04-9a47f32fcf47
+kubeconfig entry generated for kraken-prod-109.
+NAME: kraken-prod-109
+LOCATION: us-east1-b
+MASTER_VERSION: 1.21.5-gke.1302
+MASTER_IP: 104.196.30.94
+MACHINE_TYPE: e2-medium
+NODE_VERSION: 1.21.5-gke.1302
+NUM_NODES: 2
+STATUS: RUNNING
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud container clusters get-credentials kraken-prod --zone=us-east1-b
+Fetching cluster endpoint and auth data.
+ERROR: (gcloud.container.clusters.get-credentials) ResponseError: code=404, message=Not found: projects/qwiklabs-gcp-04-9a47f32fcf47/zones/us-east1-b/clusters/kraken-prod.
+No cluster named 'kraken-prod' in qwiklabs-gcp-04-9a47f32fcf47.
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud container clusters get-credentials kraken-prod-109 --zone=us-east1-b
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for kraken-prod-109.
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+nd
+  sessionAffinity: None
+  type: ClusterIP
+EOF
+
+cat >> service-prod-frontend.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sample-frontend-production
+  name: sample-frontend-production
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: sample
+    role: frontend
+  sessionAffinity: None
+  type: LoadBalancer
+EOF
+
+kubectl create -f deployment-prod-backend.yaml
+kubectl create -f deployment-prod-frontend.yaml
+kubectl create -f service-prod-backend.yaml
+kubectl create -f service-prod-frontend.yaml
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> deployment-prod-backend.yaml << EOF
+> kind: Deployment
+> apiVersion: apps/v1
+> metadata:
+>   name: sample-backend-production
+> spec:
+>   replicas: 2
+>   selector:
+>     matchLabels:
+>       app: sample
+>   template:
+>     metadata:
+>       name: backend
+>       labels:
+>         app: sample
+>         role: backend
+>         env: production
+>     spec:
+>       containers:
+>       - name: backend
+>         image: gcr.io/qwiklabs-resources/sample-app:v1.0.0
+>         resources:
+>           limits:
+>             memory: "500Mi"
+>             cpu: "100m"
+>         imagePullPolicy: Always
+>         readinessProbe:
+>           httpGet:
+>             path: /health
+>             port: 8080
+>         env:
+>         - name: COMPONENT
+>           value: backend
+>         - name: VERSION
+>           value: production
+>         ports:
+>         - name: backend
+>           containerPort: 8080
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> deployment-prod-frontend.yaml << EOF
+> kind: Deployment
+> apiVersion: apps/v1
+> metadata:
+>   name: sample-frontend-production
+> spec:
+>   replicas: 2
+>   selector:
+>     matchLabels:
+>       app: sample
+>   template:
+>     metadata:
+>       name: frontend
+>       labels:
+>         app: sample
+>         role: frontend
+>         env: production
+>     spec:
+>       containers:
+>       - name: frontend
+>         image: gcr.io/qwiklabs-resources/sample-app:v1.0.0
+>         resources:
+>           limits:
+>             memory: "500Mi"
+>             cpu: "100m"
+>         imagePullPolicy: Always
+>         readinessProbe:
+>           httpGet:
+>             path: /health
+>             port: 8080
+>         env:
+>         - name: COMPONENT
+>           value: frontend
+>         - name: BACKEND_URL
+>           value: http://sample-backend-production:8080/metadata
+>         - name: VERSION
+>           value: production
+>         ports:
+>         - name: frontend
+>           containerPort: 8080
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> service-prod-backend.yaml << EOF
+> apiVersion: v1
+> kind: Service
+> metadata:
+>   labels:
+>     app: sample-backend-production
+>   name: sample-backend-production
+> spec:
+>   ports:
+>   - name: 8080-8080
+>     port: 8080
+>     protocol: TCP
+>     targetPort: 8080
+>   selector:
+>     app: sample
+>     role: backend
+>   sessionAffinity: None
+>   type: ClusterIP
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> service-prod-frontend.yaml << EOF
+> apiVersion: v1
+> kind: Service
+> metadata:
+>   labels:
+>     app: sample-frontend-production
+>   name: sample-frontend-production
+> spec:
+>   ports:
+>   - name: http
+>     port: 80
+>     protocol: TCP
+>     targetPort: 8080
+>   selector:
+>     app: sample
+>     role: frontend
+>   sessionAffinity: None
+>   type: LoadBalancer
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ kubectl create -f deployment-prod-backend.yaml
+deployment.apps/sample-backend-production created
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ kubectl create -f deployment-prod-frontend.yaml
+deployment.apps/sample-frontend-production created
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ kubectl create -f service-prod-backend.yaml
+service/sample-backend-production created
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ kubectl create -f service-prod-frontend.yaml
+service/sample-frontend-production created
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud compute instances create kraken-admin-778 --zone=us-east1-b --machine-type=n1-standard-1 --network-interface subnet=kraken-mgmt-subnet --network-interface subnet=kraken-prod-subnet
+Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-9a47f32fcf47/zones/us-east1-b/instances/kraken-admin-778].
+NAME: kraken-admin-778
+ZONE: us-east1-b
+MACHINE_TYPE: n1-standard-1
+PREEMPTIBLE:
+INTERNAL_IP: 192.168.10.3,192.168.12.4
+EXTERNAL_IP: 34.139.39.4,35.227.107.221
+STATUS: RUNNING
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ export EMAIL=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> channel.json << EOF
+> {
+>       "type": "email",
+>       "displayName": "Alert notifications",
+>       "description": "An address to send email",
+>       "labels": {
+>         "email_address": "$EMAIL"
+>       },
+> }
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud beta monitoring channels create --channel-content-from-file="channel.json"
+Created notification channel [projects/qwiklabs-gcp-04-9a47f32fcf47/notificationChannels/1392367762531060769].
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ export CHANNEL=$(gcloud beta monitoring channels list --format="value(name)")
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cat >> alert.json << EOF
+> {
+>    "combiner":"OR",
+>    "conditions":[
+>       {
+>          "conditionThreshold":{
+>             "aggregations":[
+>                {
+>                   "alignmentPeriod":"60s",
+>                   "perSeriesAligner":"ALIGN_MEAN"
+>                }
+>             ],
+>             "comparison":"COMPARISON_GT",
+>             "duration":"60s",
+>             "filter":"metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\" metric.label.\"instance_name\"=\"kraken-admin-778\"",
+>             "thresholdValue":0.6,
+>             "trigger":{
+>                "count":1
+>             }
+>          },
+>          "displayName":"GCE VM Instance - CPU utilization for kraken-admin-778"
+>       }
+>    ],
+>    "displayName":"kraken-admin-778",
+>    "enabled":true,
+>    "notificationChannels":[
+>       "$CHANNEL"
+>    ]
+> }
+> EOF
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud alpha monitoring policies create --policy-from-file="alert.json"
+Created alert policy [projects/qwiklabs-gcp-04-9a47f32fcf47/alertPolicies/7996292873845617779].
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud container clusters get-credentials spinnaker-tutorial --region=us-east1-b
+Fetching cluster endpoint and auth data.
+kubeconfig entry generated for spinnaker-tutorial.
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ export DECK_POD=$(kubectl get pods --namespace default -l "cluster=spin-deck" -o jsonpath="{.items[0].metadata.name}")
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ kubectl port-forward --namespace default $DECK_POD 8080:9000 >> /dev/null &
+[1] 789
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ gcloud source repos clone sample-app
+Cloning into '/home/student_00_fc48751d4337/sample-app'...
+remote: Total 84 (delta 11), reused 84 (delta 11)
+Unpacking objects: 100% (84/84), done.
+Project [qwiklabs-gcp-04-9a47f32fcf47] repository [sample-app] was cloned to [/home/student_00_fc48751d4337/sample-app].
+student_00_fc48751d4337@cloudshell:~ (qwiklabs-gcp-04-9a47f32fcf47)$ cd sample-app
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ git config --global user.email "$(gcloud config get-value core/account)"
+Your active configuration is: [cloudshell-17863]
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ git config --global user.name "$(whoami)"
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ export PROJECT=$(gcloud info --format='value(config.project)')
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ sed -i s/PROJECT/$PROJECT/g k8s/deployments/*
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ git add .
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ git commit -a -m "Set project ID"
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ git tag v2.0.1
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$ git push --tags
+Total 0 (delta 0), reused 0 (delta 0)
+To https://source.developers.google.com/p/qwiklabs-gcp-04-9a47f32fcf47/r/sample-app
+ * [new tag]         v2.0.1 -> v2.0.1
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$
+student_00_fc48751d4337@cloudshell:~/sample-app (qwiklabs-gcp-04-9a47f32fcf47)$
