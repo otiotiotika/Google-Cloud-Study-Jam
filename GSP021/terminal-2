@@ -1,0 +1,288 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-01-9c39a0f410d7.
+Use “gcloud config set project [PROJECT_ID]” to change to a different project.
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ curl http://127.0.0.1:10080
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ curl http://127.0.0.1:10080/secure
+authorization failed
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ curl -u user http://127.0.0.1:10080/login
+Enter host password for user 'user':
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJleHAiOjE2NDMxNjkzMzIsImlhdCI6MTY0MjkxMDEzMiwiaXNzIjoiYXV0aC5zZXJ2aWNlIiwic3ViIjoidXNlciJ9.UrEOxf6qS3aM_L3zrF529iaGNu4E_u_pmIUTmE0cUT0"}
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ TOKEN=$(curl http://127.0.0.1:10080/login -u user|jq -r '.token')
+Enter host password for user 'user':
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   222  100   222    0     0    224      0 --:--:-- --:--:-- --:--:--   224
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:10080/secure
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl logs monolith
+2022/01/23 03:54:45 Starting server...
+2022/01/23 03:54:45 Health service listening on 0.0.0.0:81
+2022/01/23 03:54:45 HTTP service listening on 0.0.0.0:80
+127.0.0.1:34496 - - [Sun, 23 Jan 2022 03:55:12 UTC] "GET / HTTP/1.1" curl/7.64.0
+127.0.0.1:34508 - - [Sun, 23 Jan 2022 03:55:23 UTC] "GET /secure HTTP/1.1" curl/7.64.0
+127.0.0.1:34520 - - [Sun, 23 Jan 2022 03:55:32 UTC] "GET /login HTTP/1.1" curl/7.64.0
+127.0.0.1:34534 - - [Sun, 23 Jan 2022 03:55:45 UTC] "GET /login HTTP/1.1" curl/7.64.0
+127.0.0.1:34544 - - [Sun, 23 Jan 2022 03:55:51 UTC] "GET /secure HTTP/1.1" curl/7.64.0
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ curl http://127.0.0.1:10080
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl exec monolith --stdin --tty -c monolith /bin/sh
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+/ # ping -c 3 google.com
+PING google.com (142.250.152.113): 56 data bytes
+64 bytes from 142.250.152.113: seq=0 ttl=114 time=1.177 ms
+64 bytes from 142.250.152.113: seq=1 ttl=114 time=1.684 ms
+64 bytes from 142.250.152.113: seq=2 ttl=114 time=1.083 ms
+
+--- google.com ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+round-trip min/avg/max = 1.083/1.314/1.684 ms
+/ # exit
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ cd ~/orchestrate-with-kubernetes/kubernetes
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ cat pods/secure-monolith.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "secure-monolith"
+  labels:
+    app: monolith
+spec:
+  containers:
+    - name: nginx
+      image: "nginx:1.9.14"
+      lifecycle:
+        preStop:
+          exec:
+            command: ["/usr/sbin/nginx","-s","quit"]
+      volumeMounts:
+        - name: "nginx-proxy-conf"
+          mountPath: "/etc/nginx/conf.d"
+        - name: "tls-certs"
+          mountPath: "/etc/tls"
+    - name: monolith
+      image: "kelseyhightower/monolith:1.0.0"
+      ports:
+        - name: http
+          containerPort: 80
+        - name: health
+          containerPort: 81
+      resources:
+        limits:
+          cpu: 0.2
+          memory: "10Mi"
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 81
+          scheme: HTTP
+        initialDelaySeconds: 5
+        periodSeconds: 15
+        timeoutSeconds: 5
+      readinessProbe:
+        httpGet:
+          path: /readiness
+          port: 81
+          scheme: HTTP
+        initialDelaySeconds: 5
+        timeoutSeconds: 1
+  volumes:
+    - name: "tls-certs"
+      secret:
+        secretName: "tls-certs"
+    - name: "nginx-proxy-conf"
+      configMap:
+        name: "nginx-proxy-conf"
+        items:
+          - key: "proxy.conf"
+            path: "proxy.conf"
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create secret generic tls-certs --from-file tls/
+secret/tls-certs created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create configmap nginx-proxy-conf --from-file nginx/proxy.conf
+configmap/nginx-proxy-conf created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f pods/secure-monolith.yaml
+pod/secure-monolith created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ cat services/monolith.yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: "monolith"
+spec:
+  selector:
+    app: "monolith"
+    secure: "enabled"
+  ports:
+    - protocol: "TCP"
+      port: 443
+      targetPort: 443
+      nodePort: 31000
+  type: NodePort
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f services/monolith.yaml
+service/monolith created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ gcloud compute firewall-rules create allow-monolith-nodeport \
+>   --allow=tcp:31000
+Creating firewall...working..Created [https://www.googleapis.com/compute/v1/projects/qwiklabs-gcp-01-9c39a0f410d7/global/firewalls/allow-monolith-nodeport].
+Creating firewall...done.
+NAME: allow-monolith-nodeport
+NETWORK: default
+DIRECTION: INGRESS
+PRIORITY: 1000
+ALLOW: tcp:31000
+DENY:
+DISABLED: False
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ gcloud compute instances list
+NAME: gke-io-default-pool-661c1f22-c5cx
+ZONE: us-central1-b
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.3
+EXTERNAL_IP: 35.193.91.167
+STATUS: RUNNING
+
+NAME: gke-io-default-pool-661c1f22-xcl8
+ZONE: us-central1-b
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.4
+EXTERNAL_IP: 104.197.129.173
+STATUS: RUNNING
+
+NAME: gke-io-default-pool-661c1f22-zcrz
+ZONE: us-central1-b
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.2
+EXTERNAL_IP: 34.69.65.86
+STATUS: RUNNING
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get services monolith
+NAME       TYPE       CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE
+monolith   NodePort   10.72.12.85   <none>        443:31000/TCP   57s
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl describe services monolith
+Name:                     monolith
+Namespace:                default
+Labels:                   <none>
+Annotations:              cloud.google.com/neg: {"ingress":true}
+Selector:                 app=monolith,secure=enabled
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.72.12.85
+IPs:                      10.72.12.85
+Port:                     <unset>  443/TCP
+TargetPort:               443/TCP
+NodePort:                 <unset>  31000/TCP
+Endpoints:                <none>
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get pods -l "app=monolith"
+NAME              READY   STATUS    RESTARTS   AGE
+monolith          1/1     Running   0          6m31s
+secure-monolith   2/2     Running   0          3m19s
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get pods -l "app=monolith,secure=enabled"
+No resources found in default namespace.
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl label pods secure-monolith 'secure=enabled'
+pod/secure-monolith labeled
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get pods secure-monolith --show-labels
+NAME              READY   STATUS    RESTARTS   AGE     LABELS
+secure-monolith   2/2     Running   0          3m41s   app=monolith,secure=enabled
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl describe services monolith | grep Endpoints
+Endpoints:                10.68.0.4:443
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ gcloud compute instances list
+NAME: gke-io-default-pool-661c1f22-c5cx
+ZONE: us-central1-b
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.3
+EXTERNAL_IP: 35.193.91.167
+STATUS: RUNNING
+
+NAME: gke-io-default-pool-661c1f22-xcl8
+ZONE: us-central1-b
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.4
+EXTERNAL_IP: 104.197.129.173
+STATUS: RUNNING
+
+NAME: gke-io-default-pool-661c1f22-zcrz
+ZONE: us-central1-b
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.2
+EXTERNAL_IP: 34.69.65.86
+STATUS: RUNNING
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ curl -k https://35.193.91.167:31000
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ curl -k https://34.69.65.86:31000
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ curl -k https://104.197.129.173:31000
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ cat deployments/auth.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+spec:
+  selector:
+    matchLabels:
+      app: auth
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: auth
+        track: stable
+    spec:
+      containers:
+        - name: auth
+          image: "kelseyhightower/auth:2.0.0"
+          ports:
+            - name: http
+              containerPort: 80
+            - name: health
+              containerPort: 81
+          resources:
+            limits:
+              cpu: 0.2
+              memory: "10Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 81
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 81
+              scheme: HTTP
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f deployments/auth.yaml
+deployment.apps/auth created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f services/auth.yaml
+service/auth created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f deployments/hello.yaml
+deployment.apps/hello created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f services/hello.yaml
+service/hello created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create configmap nginx-frontend-conf --from-file=nginx/frontend.conf
+configmap/nginx-frontend-conf created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f deployments/frontend.yaml
+deployment.apps/frontend created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl create -f services/frontend.yaml
+service/frontend created
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get services frontend
+NAME       TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
+frontend   LoadBalancer   10.72.1.32   <pending>     443:31965/TCP   4s
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get services frontend
+NAME       TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
+frontend   LoadBalancer   10.72.1.32   <pending>     443:31965/TCP   17s
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl get services frontend
+NAME       TYPE           CLUSTER-IP   EXTERNAL-IP     PORT(S)         AGE
+frontend   LoadBalancer   10.72.1.32   35.239.101.37   443:31965/TCP   2m21s
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$ curl -k https://35.239.101.37
+{"message":"Hello"}
+student_04_352f32f59905@cloudshell:~/orchestrate-with-kubernetes/kubernetes (qwiklabs-gcp-01-9c39a0f410d7)$
