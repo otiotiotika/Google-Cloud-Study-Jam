@@ -1,0 +1,15 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-01-9c39a0f410d7.
+Use “gcloud config set project [PROJECT_ID]” to change to a different project.
+student_04_352f32f59905@cloudshell:~ (qwiklabs-gcp-01-9c39a0f410d7)$ kubectl logs -f monolith
+2022/01/23 03:54:45 Starting server...
+2022/01/23 03:54:45 Health service listening on 0.0.0.0:81
+2022/01/23 03:54:45 HTTP service listening on 0.0.0.0:80
+127.0.0.1:34496 - - [Sun, 23 Jan 2022 03:55:12 UTC] "GET / HTTP/1.1" curl/7.64.0
+127.0.0.1:34508 - - [Sun, 23 Jan 2022 03:55:23 UTC] "GET /secure HTTP/1.1" curl/7.64.0
+127.0.0.1:34520 - - [Sun, 23 Jan 2022 03:55:32 UTC] "GET /login HTTP/1.1" curl/7.64.0
+127.0.0.1:34534 - - [Sun, 23 Jan 2022 03:55:45 UTC] "GET /login HTTP/1.1" curl/7.64.0
+127.0.0.1:34544 - - [Sun, 23 Jan 2022 03:55:51 UTC] "GET /secure HTTP/1.1" curl/7.64.0
+127.0.0.1:34580 - - [Sun, 23 Jan 2022 03:56:24 UTC] "GET / HTTP/1.1" curl/7.64.0
+
+
