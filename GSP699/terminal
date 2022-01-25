@@ -1,0 +1,987 @@
+Welcome to Cloud Shell! Type "help" to get started.
+Your Cloud Platform project in this session is set to qwiklabs-gcp-04-4b254bfee065.
+Use “gcloud config set project [PROJECT_ID]” to change to a different project.
+student_04_f5cf4baa315f@cloudshell:~ (qwiklabs-gcp-04-4b254bfee065)$ gcloud config set compute/zone us-central1-f
+Updated property [compute/zone].
+student_04_f5cf4baa315f@cloudshell:~ (qwiklabs-gcp-04-4b254bfee065)$ cd ~
+student_04_f5cf4baa315f@cloudshell:~ (qwiklabs-gcp-04-4b254bfee065)$ git clone https://github.com/googlecodelabs/monolith-to-microservices.git
+Cloning into 'monolith-to-microservices'...
+remote: Enumerating objects: 989, done.
+remote: Counting objects: 100% (61/61), done.
+remote: Compressing objects: 100% (39/39), done.
+remote: Total 989 (delta 25), reused 37 (delta 15), pack-reused 928
+Receiving objects: 100% (989/989), 2.87 MiB | 9.50 MiB/s, done.
+Resolving deltas: 100% (420/420), done.
+student_04_f5cf4baa315f@cloudshell:~ (qwiklabs-gcp-04-4b254bfee065)$ cd monolith-to-microservices/
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ git reset --hard 0fe35b4e03c28a5acd4a4c396a740706775357fc
+HEAD is now at 0fe35b4 Updated package versions
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ ./setup.sh
+Checking for required npm version...Completed.
+Installing monolith dependencies...Completed.
+Installing microservies dependencies...Completed.
+Installing React app dependencies...Completed.
+Building React app and placing into sub projects...Completed.
+
+Script completed successfully!
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ gcloud services enable container.googleapis.com
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ gcloud container clusters create fancy-cluster --num-nodes 3
+Default change: VPC-native is the default mode during cluster creation for versions greater than 1.21.0-gke.1500. To create advanced routes based clusters, please pass the `--no-enable-ip-alias` flag
+Note: Your Pod address range (`--cluster-ipv4-cidr`) can accommodate at most 1008 node(s).
+Creating cluster fancy-cluster in us-central1-f...done.     
+Created [https://container.googleapis.com/v1/projects/qwiklabs-gcp-04-4b254bfee065/zones/us-central1-f/clusters/fancy-cluster].
+To inspect the contents of your cluster, go to: https://console.cloud.google.com/kubernetes/workload_/gcloud/us-central1-f/fancy-cluster?project=qwiklabs-gcp-04-4b254bfee065
+kubeconfig entry generated for fancy-cluster.
+NAME: fancy-cluster
+LOCATION: us-central1-f
+MASTER_VERSION: 1.21.5-gke.1302
+MASTER_IP: 35.225.184.177
+MACHINE_TYPE: e2-medium
+NODE_VERSION: 1.21.5-gke.1302
+NUM_NODES: 3
+STATUS: RUNNING
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ gcloud compute instances list
+NAME: gke-fancy-cluster-default-pool-d78ef0e8-9rkh
+ZONE: us-central1-f
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.3
+EXTERNAL_IP: 34.72.254.100
+STATUS: RUNNING
+
+NAME: gke-fancy-cluster-default-pool-d78ef0e8-dzh9
+ZONE: us-central1-f
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.4
+EXTERNAL_IP: 34.122.57.121
+STATUS: RUNNING
+
+NAME: gke-fancy-cluster-default-pool-d78ef0e8-rx6q
+ZONE: us-central1-f
+MACHINE_TYPE: e2-medium
+PREEMPTIBLE:
+INTERNAL_IP: 10.128.0.2
+EXTERNAL_IP: 34.122.124.5
+STATUS: RUNNING
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ ./deploy-monolith.sh
+Enabling Cloud Build APIs...Completed.
+Building Monolith Container...Completed.
+Deploying Monolith To GKE Cluster...Completed.
+
+Please run the following command to find the IP address for the monolith service:  kubectl get service monolith
+
+Deployment Complete
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service monolith
+NAME       TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+monolith   LoadBalancer   10.20.14.128   <pending>     80:31297/TCP   19s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service monolith
+NAME       TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+monolith   LoadBalancer   10.20.14.128   <pending>     80:31297/TCP   35s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service monolith
+NAME       TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)        AGE
+monolith   LoadBalancer   10.20.14.128   34.136.46.221   80:31297/TCP   78s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/microservices/src/orders
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/orders:1.0.0 .
+Creating temporary tarball archive of 8 file(s) totalling 18.0 KiB before compression.
+Some files were not included in the source upload.
+
+Check the gcloud log [/tmp/tmp.MPSmtKjUPT/logs/2022.01.25/14.42.38.453774.log] to see which files and the contents of the
+default gcloudignore file used (see `$ gcloud topic gcloudignore` to learn
+more).
+
+Uploading tarball of [.] to [gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643121758.55048-426af1c5b7664d448bad559a327a6f47.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/qwiklabs-gcp-04-4b254bfee065/locations/global/builds/fcaebd51-5134-4167-9b52-6f342dfbacf5].
+Logs are available at [https://console.cloud.google.com/cloud-build/builds/fcaebd51-5134-4167-9b52-6f342dfbacf5?project=414314916648].
+----------------------------------------------------------------------------------------- REMOTE BUILD OUTPUT -----------------------------------------------------------------------------------------
+starting build "fcaebd51-5134-4167-9b52-6f342dfbacf5"
+
+FETCHSOURCE
+Fetching storage object: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643121758.55048-426af1c5b7664d448bad559a327a6f47.tgz#1643121759289482
+Copying gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643121758.55048-426af1c5b7664d448bad559a327a6f47.tgz#1643121759289482...
+/ [1 files][  6.2 KiB/  6.2 KiB]
+Operation completed over 1 objects/6.2 KiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  26.62kB
+Step 1/7 : FROM node:10
+10: Pulling from library/node
+76b8ef87096f: Pulling fs layer
+2e2bafe8a0f4: Pulling fs layer
+b53ce1fd2746: Pulling fs layer
+84a8c1bd5887: Pulling fs layer
+7a803dc0b40f: Pulling fs layer
+b800e94e7303: Pulling fs layer
+0da9fbf60d48: Pulling fs layer
+04dccde934cf: Pulling fs layer
+73269890f6fd: Pulling fs layer
+b800e94e7303: Waiting
+0da9fbf60d48: Waiting
+04dccde934cf: Waiting
+73269890f6fd: Waiting
+84a8c1bd5887: Waiting
+7a803dc0b40f: Waiting
+b53ce1fd2746: Verifying Checksum
+b53ce1fd2746: Download complete
+2e2bafe8a0f4: Verifying Checksum
+2e2bafe8a0f4: Download complete
+76b8ef87096f: Verifying Checksum
+76b8ef87096f: Download complete
+b800e94e7303: Verifying Checksum
+b800e94e7303: Download complete
+84a8c1bd5887: Verifying Checksum
+84a8c1bd5887: Download complete
+0da9fbf60d48: Verifying Checksum
+0da9fbf60d48: Download complete
+04dccde934cf: Verifying Checksum
+04dccde934cf: Download complete
+73269890f6fd: Verifying Checksum
+73269890f6fd: Download complete
+7a803dc0b40f: Verifying Checksum
+7a803dc0b40f: Download complete
+76b8ef87096f: Pull complete
+2e2bafe8a0f4: Pull complete
+b53ce1fd2746: Pull complete
+84a8c1bd5887: Pull complete
+7a803dc0b40f: Pull complete
+b800e94e7303: Pull complete
+0da9fbf60d48: Pull complete
+04dccde934cf: Pull complete
+73269890f6fd: Pull complete
+Digest: sha256:59531d2835edd5161c8f9512f9e095b1836f7a1fcb0ab73e005ec46047384911
+Status: Downloaded newer image for node:10
+ 28dca6642db8
+Step 2/7 : WORKDIR /usr/src/app
+ Running in ee35b79a9055
+Removing intermediate container ee35b79a9055
+ 43f9e463cb4f
+Step 3/7 : COPY package*.json ./
+ ac0175fde095
+Step 4/7 : RUN npm install
+ Running in d980bdd5d85c
+npm WARN orders@1.0.0 No description
+npm WARN orders@1.0.0 No repository field.
+
+added 52 packages from 39 contributors and audited 52 packages in 1.41s
+found 0 vulnerabilities
+
+Removing intermediate container d980bdd5d85c
+ 3371a06625b8
+Step 5/7 : COPY . .
+ 64eea7ae649a
+Step 6/7 : EXPOSE 8081
+ Running in bd6a1fbbae50
+Removing intermediate container bd6a1fbbae50
+ 0ddfa7d8c498
+Step 7/7 : CMD [ "node", "server.js" ]
+ Running in 64243e063619
+Removing intermediate container 64243e063619
+ 4501d3df2d28
+Successfully built 4501d3df2d28
+Successfully tagged gcr.io/qwiklabs-gcp-04-4b254bfee065/orders:1.0.0
+PUSH
+Pushing gcr.io/qwiklabs-gcp-04-4b254bfee065/orders:1.0.0
+The push refers to repository [gcr.io/qwiklabs-gcp-04-4b254bfee065/orders]
+b9fe9d43cc9f: Preparing
+ccbe08920e40: Preparing
+c85396deee6e: Preparing
+d037455d9f35: Preparing
+3ab01e8988bf: Preparing
+c98dc9a94132: Preparing
+3ffdb7e28503: Preparing
+33dd93485756: Preparing
+607d71c12b77: Preparing
+052174538f53: Preparing
+8abfe7e7c816: Preparing
+c8b886062a47: Preparing
+16fc2e3ca032: Preparing
+c98dc9a94132: Waiting
+3ffdb7e28503: Waiting
+33dd93485756: Waiting
+607d71c12b77: Waiting
+052174538f53: Waiting
+8abfe7e7c816: Waiting
+c8b886062a47: Waiting
+16fc2e3ca032: Waiting
+3ab01e8988bf: Layer already exists
+c98dc9a94132: Layer already exists
+3ffdb7e28503: Layer already exists
+33dd93485756: Layer already exists
+607d71c12b77: Layer already exists
+052174538f53: Layer already exists
+8abfe7e7c816: Layer already exists
+c8b886062a47: Layer already exists
+16fc2e3ca032: Layer already exists
+b9fe9d43cc9f: Pushed
+d037455d9f35: Pushed
+c85396deee6e: Pushed
+ccbe08920e40: Pushed
+1.0.0: digest: sha256:852a076c2837d832e0d0c97b9d81d68e5508d6a2e614f15ed5e79722e81a3424 size: 3049
+DONE
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ID: fcaebd51-5134-4167-9b52-6f342dfbacf5
+CREATE_TIME: 2022-01-25T14:42:39+00:00
+DURATION: 30S
+SOURCE: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643121758.55048-426af1c5b7664d448bad559a327a6f47.tgz
+IMAGES: gcr.io/qwiklabs-gcp-04-4b254bfee065/orders:1.0.0
+STATUS: SUCCESS
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ kubectl create deployment orders --image=gcr.io/${GOOGLE_CLOUD_PROJECT}/orders:1.0.0
+deployment.apps/orders created
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ kubectl get all
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/monolith-5dc795fcf4-f8x6k   1/1     Running   0          3m26s
+pod/orders-6c6f4df6f9-txppb     1/1     Running   0          9s
+
+NAME                 TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)        AGE
+service/kubernetes   ClusterIP      10.20.0.1      <none>          443/TCP        6m2s
+service/monolith     LoadBalancer   10.20.14.128   34.136.46.221   80:31297/TCP   3m24s
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/monolith   1/1     1            1           3m26s
+deployment.apps/orders     1/1     1            1           9s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/monolith-5dc795fcf4   1         1         1       3m27s
+replicaset.apps/orders-6c6f4df6f9     1         1         1       10s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ kubectl expose deployment orders --type=LoadBalancer --port 80 --target-port 8081
+service/orders exposed
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service orders
+NAME     TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE
+orders   LoadBalancer   10.20.5.19   <pending>     80:30460/TCP   6s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service orders
+NAME     TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE
+orders   LoadBalancer   10.20.5.19   <pending>     80:30460/TCP   20s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service orders
+NAME     TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)        AGE
+orders   LoadBalancer   10.20.5.19   35.232.113.226   80:30460/TCP   47s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/orders (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/react-app
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ nano .env.monolith
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ npm run build:monolith
+
+> frontend@0.1.0 build:monolith
+> env-cmd -f .env.monolith react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  79.08 KB        build/static/js/2.99058a84.chunk.js
+  2.02 KB (+4 B)  build/static/js/main.da838141.chunk.js
+  770 B           build/static/js/runtime-main.c8a21426.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  bit.ly/CRA-deploy
+
+
+> frontend@0.1.0 postbuild:monolith
+> node scripts/post-build.js ./build ../monolith/public
+
+Deleting stale folder: ../monolith/public
+Deleted stale destination folder: ../monolith/public
+Copying files from ./build to ../monolith/public
+Copied ./build to ../monolith/public successfully!
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/monolith
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/monolith (qwiklabs-gcp-04-4b254bfee065)$ gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:2.0.0 .
+Creating temporary tarball archive of 33 file(s) totalling 2.4 MiB before compression.
+Uploading tarball of [.] to [gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122053.082438-f13f47e2114440e4a13bf5e1fe52681b.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/qwiklabs-gcp-04-4b254bfee065/locations/global/builds/56475503-4c3b-43e4-b52b-9ee6158788f9].
+Logs are available at [https://console.cloud.google.com/cloud-build/builds/56475503-4c3b-43e4-b52b-9ee6158788f9?project=414314916648].
+----------------------------------------------------------------------------------------------------------- REMOTE BUILD OUTPUT -----------------------------------------------------------------------------------------------------------
+starting build "56475503-4c3b-43e4-b52b-9ee6158788f9"
+
+FETCHSOURCE
+Fetching storage object: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122053.082438-f13f47e2114440e4a13bf5e1fe52681b.tgz#1643122054503978
+Copying gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122053.082438-f13f47e2114440e4a13bf5e1fe52681b.tgz#1643122054503978...
+/ [1 files][  1.4 MiB/  1.4 MiB]
+Operation completed over 1 objects/1.4 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  2.512MB
+Step 1/7 : FROM node:10
+10: Pulling from library/node
+76b8ef87096f: Pulling fs layer
+2e2bafe8a0f4: Pulling fs layer
+b53ce1fd2746: Pulling fs layer
+84a8c1bd5887: Pulling fs layer
+7a803dc0b40f: Pulling fs layer
+b800e94e7303: Pulling fs layer
+0da9fbf60d48: Pulling fs layer
+04dccde934cf: Pulling fs layer
+73269890f6fd: Pulling fs layer
+84a8c1bd5887: Waiting
+7a803dc0b40f: Waiting
+b800e94e7303: Waiting
+0da9fbf60d48: Waiting
+04dccde934cf: Waiting
+73269890f6fd: Waiting
+b53ce1fd2746: Download complete
+2e2bafe8a0f4: Verifying Checksum
+2e2bafe8a0f4: Download complete
+76b8ef87096f: Verifying Checksum
+76b8ef87096f: Download complete
+b800e94e7303: Verifying Checksum
+b800e94e7303: Download complete
+84a8c1bd5887: Verifying Checksum
+84a8c1bd5887: Download complete
+04dccde934cf: Verifying Checksum
+04dccde934cf: Download complete
+73269890f6fd: Verifying Checksum
+73269890f6fd: Download complete
+0da9fbf60d48: Verifying Checksum
+0da9fbf60d48: Download complete
+7a803dc0b40f: Verifying Checksum
+7a803dc0b40f: Download complete
+76b8ef87096f: Pull complete
+2e2bafe8a0f4: Pull complete
+b53ce1fd2746: Pull complete
+84a8c1bd5887: Pull complete
+7a803dc0b40f: Pull complete
+b800e94e7303: Pull complete
+0da9fbf60d48: Pull complete
+04dccde934cf: Pull complete
+73269890f6fd: Pull complete
+Digest: sha256:59531d2835edd5161c8f9512f9e095b1836f7a1fcb0ab73e005ec46047384911
+Status: Downloaded newer image for node:10
+ 28dca6642db8
+Step 2/7 : WORKDIR /usr/src/app
+ Running in 6610bc8a0bd0
+Removing intermediate container 6610bc8a0bd0
+ 809a2e3fef3a
+Step 3/7 : COPY package*.json ./
+ 23bcff6296c2
+Step 4/7 : RUN npm install
+ Running in f88518e111d5
+npm WARN read-shrinkwrap This version of npm is compatible with lockfileVersion@1, but package-lock.json was generated for lockfileVersion@2. I'll try to do my best with it!
+npm WARN monolith@1.0.0 No description
+npm WARN monolith@1.0.0 No repository field.
+
+added 50 packages from 37 contributors and audited 50 packages in 1.86s
+found 0 vulnerabilities
+Removing intermediate container f88518e111d5
+ bb24b4977d48
+Step 5/7 : COPY . .
+ 9d30296f167a
+Step 6/7 : EXPOSE 8080
+ Running in e8c31ad36dd6
+Removing intermediate container e8c31ad36dd6
+ 38b872843a13
+Step 7/7 : CMD [ "node", "src/server.js" ]
+ Running in 4dfdbeb756e2
+Removing intermediate container 4dfdbeb756e2
+ b2de957aaee5
+Successfully built b2de957aaee5
+Successfully tagged gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith:2.0.0
+PUSH
+Pushing gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith:2.0.0
+The push refers to repository [gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith]
+d5a29bf83c3e: Preparing
+1a6118b0650b: Preparing
+9ea413005699: Preparing
+f640e8e91276: Preparing
+3ab01e8988bf: Preparing
+c98dc9a94132: Preparing
+3ffdb7e28503: Preparing
+33dd93485756: Preparing
+607d71c12b77: Preparing
+052174538f53: Preparing
+8abfe7e7c816: Preparing
+c8b886062a47: Preparing
+16fc2e3ca032: Preparing
+33dd93485756: Waiting
+607d71c12b77: Waiting
+052174538f53: Waiting
+8abfe7e7c816: Waiting
+c8b886062a47: Waiting
+16fc2e3ca032: Waiting
+c98dc9a94132: Waiting
+3ffdb7e28503: Waiting
+3ab01e8988bf: Layer already exists
+c98dc9a94132: Layer already exists
+3ffdb7e28503: Layer already exists
+33dd93485756: Layer already exists
+607d71c12b77: Layer already exists
+052174538f53: Layer already exists
+8abfe7e7c816: Layer already exists
+c8b886062a47: Layer already exists
+16fc2e3ca032: Layer already exists
+f640e8e91276: Pushed
+9ea413005699: Pushed
+1a6118b0650b: Pushed
+d5a29bf83c3e: Pushed
+2.0.0: digest: sha256:cd0dd6e653cc8b0fa9291823b654157cf20a3ec05678f6d187c7f3ed473dc247 size: 3052
+DONE
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ID: 56475503-4c3b-43e4-b52b-9ee6158788f9
+CREATE_TIME: 2022-01-25T14:47:35+00:00
+DURATION: 45S
+SOURCE: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122053.082438-f13f47e2114440e4a13bf5e1fe52681b.tgz
+IMAGES: gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith:2.0.0
+STATUS: SUCCESS
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/monolith (qwiklabs-gcp-04-4b254bfee065)$ kubectl set image deployment/monolith monolith=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:2.0.0
+deployment.apps/monolith image updated
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/monolith (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/microservices/src/products
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/products (qwiklabs-gcp-04-4b254bfee065)$ gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/products:1.0.0 .
+Creating temporary tarball archive of 8 file(s) totalling 20.2 KiB before compression.
+Some files were not included in the source upload.
+
+Check the gcloud log [/tmp/tmp.MPSmtKjUPT/logs/2022.01.25/14.49.23.618378.log] to see which files and the contents of the
+default gcloudignore file used (see `$ gcloud topic gcloudignore` to learn
+more).
+
+Uploading tarball of [.] to [gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122163.721473-bb74314173c041b2a62d76e671a2eed0.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/qwiklabs-gcp-04-4b254bfee065/locations/global/builds/e575d7d5-ebba-4f4c-9583-9be865543973].
+Logs are available at [https://console.cloud.google.com/cloud-build/builds/e575d7d5-ebba-4f4c-9583-9be865543973?project=414314916648].
+----------------------------------------------------------------------------------------------------------- REMOTE BUILD OUTPUT -----------------------------------------------------------------------------------------------------------
+starting build "e575d7d5-ebba-4f4c-9583-9be865543973"
+
+FETCHSOURCE
+Fetching storage object: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122163.721473-bb74314173c041b2a62d76e671a2eed0.tgz#1643122164701774
+Copying gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122163.721473-bb74314173c041b2a62d76e671a2eed0.tgz#1643122164701774...
+/ [1 files][  6.8 KiB/  6.8 KiB]
+Operation completed over 1 objects/6.8 KiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  28.67kB
+Step 1/7 : FROM node:10
+10: Pulling from library/node
+76b8ef87096f: Pulling fs layer
+2e2bafe8a0f4: Pulling fs layer
+b53ce1fd2746: Pulling fs layer
+84a8c1bd5887: Pulling fs layer
+7a803dc0b40f: Pulling fs layer
+b800e94e7303: Pulling fs layer
+0da9fbf60d48: Pulling fs layer
+04dccde934cf: Pulling fs layer
+73269890f6fd: Pulling fs layer
+84a8c1bd5887: Waiting
+7a803dc0b40f: Waiting
+b800e94e7303: Waiting
+0da9fbf60d48: Waiting
+04dccde934cf: Waiting
+73269890f6fd: Waiting
+b53ce1fd2746: Verifying Checksum
+b53ce1fd2746: Download complete
+2e2bafe8a0f4: Verifying Checksum
+2e2bafe8a0f4: Download complete
+76b8ef87096f: Verifying Checksum
+76b8ef87096f: Download complete
+b800e94e7303: Verifying Checksum
+b800e94e7303: Download complete
+84a8c1bd5887: Verifying Checksum
+84a8c1bd5887: Download complete
+04dccde934cf: Verifying Checksum
+04dccde934cf: Download complete
+73269890f6fd: Verifying Checksum
+73269890f6fd: Download complete
+0da9fbf60d48: Verifying Checksum
+0da9fbf60d48: Download complete
+7a803dc0b40f: Verifying Checksum
+7a803dc0b40f: Download complete
+76b8ef87096f: Pull complete
+2e2bafe8a0f4: Pull complete
+b53ce1fd2746: Pull complete
+84a8c1bd5887: Pull complete
+7a803dc0b40f: Pull complete
+b800e94e7303: Pull complete
+0da9fbf60d48: Pull complete
+04dccde934cf: Pull complete
+73269890f6fd: Pull complete
+Digest: sha256:59531d2835edd5161c8f9512f9e095b1836f7a1fcb0ab73e005ec46047384911
+Status: Downloaded newer image for node:10
+ 28dca6642db8
+Step 2/7 : WORKDIR /usr/src/app
+ Running in e0e4ed31882d
+Removing intermediate container e0e4ed31882d
+ 7fc39bb7957b
+Step 3/7 : COPY package*.json ./
+ e7ca00f6d892
+Step 4/7 : RUN npm install
+ Running in 0f14d9341f4f
+npm WARN products@1.0.0 No description
+npm WARN products@1.0.0 No repository field.
+
+added 52 packages from 39 contributors and audited 52 packages in 1.49s
+found 0 vulnerabilities
+Removing intermediate container 0f14d9341f4f
+ 58b0381116b2
+Step 5/7 : COPY . .
+ 6ea60081f5e2
+Step 6/7 : EXPOSE 8082
+ Running in 06dda0acd46a
+Removing intermediate container 06dda0acd46a
+ d2f67a62b639
+Step 7/7 : CMD [ "node", "server.js" ]
+ Running in 140b73102c32
+Removing intermediate container 140b73102c32
+ 5dfafa7fd90d
+Successfully built 5dfafa7fd90d
+Successfully tagged gcr.io/qwiklabs-gcp-04-4b254bfee065/products:1.0.0
+PUSH
+Pushing gcr.io/qwiklabs-gcp-04-4b254bfee065/products:1.0.0
+The push refers to repository [gcr.io/qwiklabs-gcp-04-4b254bfee065/products]
+de22971ee71e: Preparing
+fd7035827781: Preparing
+c7e86358d923: Preparing
+c3510d0a9f60: Preparing
+3ab01e8988bf: Preparing
+c98dc9a94132: Preparing
+3ffdb7e28503: Preparing
+33dd93485756: Preparing
+607d71c12b77: Preparing
+052174538f53: Preparing
+8abfe7e7c816: Preparing
+c8b886062a47: Preparing
+16fc2e3ca032: Preparing
+c98dc9a94132: Waiting
+3ffdb7e28503: Waiting
+33dd93485756: Waiting
+607d71c12b77: Waiting
+052174538f53: Waiting
+8abfe7e7c816: Waiting
+c8b886062a47: Waiting
+16fc2e3ca032: Waiting
+3ab01e8988bf: Layer already exists
+c98dc9a94132: Layer already exists
+3ffdb7e28503: Layer already exists
+33dd93485756: Layer already exists
+607d71c12b77: Layer already exists
+052174538f53: Layer already exists
+8abfe7e7c816: Layer already exists
+c8b886062a47: Layer already exists
+16fc2e3ca032: Layer already exists
+c7e86358d923: Pushed
+de22971ee71e: Pushed
+c3510d0a9f60: Pushed
+fd7035827781: Pushed
+1.0.0: digest: sha256:14d09b36bad530fde54b01cf0f1bf172e99c28dc1fe6fcbfbcf833f011968d1d size: 3049
+DONE
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ID: e575d7d5-ebba-4f4c-9583-9be865543973
+CREATE_TIME: 2022-01-25T14:49:25+00:00
+DURATION: 33S
+SOURCE: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122163.721473-bb74314173c041b2a62d76e671a2eed0.tgz
+IMAGES: gcr.io/qwiklabs-gcp-04-4b254bfee065/products:1.0.0
+STATUS: SUCCESS
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/products (qwiklabs-gcp-04-4b254bfee065)$ kubectl create deployment products --image=gcr.io/${GOOGLE_CLOUD_PROJECT}/products:1.0.0
+deployment.apps/products created
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/products (qwiklabs-gcp-04-4b254bfee065)$ kubectl expose deployment products --type=LoadBalancer --port 80 --target-port 8082
+service/products exposed
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/products (qwiklabs-gcp-04-4b254bfee065)$ kubectl get service products
+NAME       TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE
+products   LoadBalancer   10.20.1.13   <pending>     80:31308/TCP   8s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/products (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/react-app
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ nano .env.monolith
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ npm run build:monolith
+
+> frontend@0.1.0 build:monolith
+> env-cmd -f .env.monolith react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  79.08 KB        build/static/js/2.99058a84.chunk.js
+  2.02 KB (+6 B)  build/static/js/main.d09e654d.chunk.js
+  770 B           build/static/js/runtime-main.c8a21426.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  bit.ly/CRA-deploy
+
+
+> frontend@0.1.0 postbuild:monolith
+> node scripts/post-build.js ./build ../monolith/public
+
+Deleting stale folder: ../monolith/public
+Deleted stale destination folder: ../monolith/public
+Copying files from ./build to ../monolith/public
+Copied ./build to ../monolith/public successfully!
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/monolith
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/monolith (qwiklabs-gcp-04-4b254bfee065)$ gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:3.0.0 .
+Creating temporary tarball archive of 33 file(s) totalling 2.4 MiB before compression.
+Uploading tarball of [.] to [gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122331.769324-16b3cf2155ee4dc2a2f639fe6ede60bf.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/qwiklabs-gcp-04-4b254bfee065/locations/global/builds/243400a3-c230-4380-bba5-3cf1e724e25c].
+Logs are available at [https://console.cloud.google.com/cloud-build/builds/243400a3-c230-4380-bba5-3cf1e724e25c?project=414314916648].
+----------------------------------------------------------------------------------------------------------- REMOTE BUILD OUTPUT -----------------------------------------------------------------------------------------------------------
+starting build "243400a3-c230-4380-bba5-3cf1e724e25c"
+
+FETCHSOURCE
+Fetching storage object: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122331.769324-16b3cf2155ee4dc2a2f639fe6ede60bf.tgz#1643122333222203
+Copying gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122331.769324-16b3cf2155ee4dc2a2f639fe6ede60bf.tgz#1643122333222203...
+/ [1 files][  1.4 MiB/  1.4 MiB]
+Operation completed over 1 objects/1.4 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  2.512MB
+Step 1/7 : FROM node:10
+10: Pulling from library/node
+76b8ef87096f: Pulling fs layer
+2e2bafe8a0f4: Pulling fs layer
+b53ce1fd2746: Pulling fs layer
+84a8c1bd5887: Pulling fs layer
+7a803dc0b40f: Pulling fs layer
+b800e94e7303: Pulling fs layer
+0da9fbf60d48: Pulling fs layer
+04dccde934cf: Pulling fs layer
+73269890f6fd: Pulling fs layer
+7a803dc0b40f: Waiting
+b800e94e7303: Waiting
+0da9fbf60d48: Waiting
+04dccde934cf: Waiting
+73269890f6fd: Waiting
+84a8c1bd5887: Waiting
+b53ce1fd2746: Verifying Checksum
+b53ce1fd2746: Download complete
+2e2bafe8a0f4: Verifying Checksum
+2e2bafe8a0f4: Download complete
+76b8ef87096f: Verifying Checksum
+76b8ef87096f: Download complete
+b800e94e7303: Verifying Checksum
+b800e94e7303: Download complete
+84a8c1bd5887: Verifying Checksum
+84a8c1bd5887: Download complete
+04dccde934cf: Verifying Checksum
+04dccde934cf: Download complete
+0da9fbf60d48: Verifying Checksum
+0da9fbf60d48: Download complete
+73269890f6fd: Verifying Checksum
+73269890f6fd: Download complete
+7a803dc0b40f: Verifying Checksum
+7a803dc0b40f: Download complete
+76b8ef87096f: Pull complete
+2e2bafe8a0f4: Pull complete
+b53ce1fd2746: Pull complete
+84a8c1bd5887: Pull complete
+7a803dc0b40f: Pull complete
+b800e94e7303: Pull complete
+0da9fbf60d48: Pull complete
+04dccde934cf: Pull complete
+73269890f6fd: Pull complete
+Digest: sha256:59531d2835edd5161c8f9512f9e095b1836f7a1fcb0ab73e005ec46047384911
+Status: Downloaded newer image for node:10
+ 28dca6642db8
+Step 2/7 : WORKDIR /usr/src/app
+ Running in 4adf27e9e3d4
+Removing intermediate container 4adf27e9e3d4
+ 2975cedad869
+Step 3/7 : COPY package*.json ./
+ d0843c35df2c
+Step 4/7 : RUN npm install
+ Running in 4091bb173d94
+npm WARN read-shrinkwrap This version of npm is compatible with lockfileVersion@1, but package-lock.json was generated for lockfileVersion@2. I'll try to do my best with it!
+npm WARN monolith@1.0.0 No description
+npm WARN monolith@1.0.0 No repository field.
+
+added 50 packages from 37 contributors and audited 50 packages in 1.717s
+found 0 vulnerabilities
+
+Removing intermediate container 4091bb173d94
+ 474fde3ca792
+Step 5/7 : COPY . .
+ 62eb8ec1a716
+Step 6/7 : EXPOSE 8080
+ Running in 5c47fd648347
+Removing intermediate container 5c47fd648347
+ 13be40c55e6b
+Step 7/7 : CMD [ "node", "src/server.js" ]
+ Running in c50c972470ee
+Removing intermediate container c50c972470ee
+ 44158dd608ca
+Successfully built 44158dd608ca
+Successfully tagged gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith:3.0.0
+PUSH
+Pushing gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith:3.0.0
+The push refers to repository [gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith]
+d2158aa35a05: Preparing
+d2f815b39f0b: Preparing
+910f34ea3f43: Preparing
+8aa61de473a9: Preparing
+3ab01e8988bf: Preparing
+c98dc9a94132: Preparing
+3ffdb7e28503: Preparing
+33dd93485756: Preparing
+607d71c12b77: Preparing
+052174538f53: Preparing
+8abfe7e7c816: Preparing
+c8b886062a47: Preparing
+16fc2e3ca032: Preparing
+c98dc9a94132: Waiting
+3ffdb7e28503: Waiting
+33dd93485756: Waiting
+607d71c12b77: Waiting
+052174538f53: Waiting
+8abfe7e7c816: Waiting
+c8b886062a47: Waiting
+16fc2e3ca032: Waiting
+3ab01e8988bf: Layer already exists
+c98dc9a94132: Layer already exists
+3ffdb7e28503: Layer already exists
+33dd93485756: Layer already exists
+607d71c12b77: Layer already exists
+052174538f53: Layer already exists
+8abfe7e7c816: Layer already exists
+c8b886062a47: Layer already exists
+16fc2e3ca032: Layer already exists
+910f34ea3f43: Pushed
+8aa61de473a9: Pushed
+d2f815b39f0b: Pushed
+d2158aa35a05: Pushed
+3.0.0: digest: sha256:df1ea1afa7da179802ad726332e7498bff583ad79f66bd0694d619a59947fd5f size: 3052
+DONE
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ID: 243400a3-c230-4380-bba5-3cf1e724e25c
+CREATE_TIME: 2022-01-25T14:52:13+00:00
+DURATION: 41S
+SOURCE: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122331.769324-16b3cf2155ee4dc2a2f639fe6ede60bf.tgz
+IMAGES: gcr.io/qwiklabs-gcp-04-4b254bfee065/monolith:3.0.0
+STATUS: SUCCESS
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/monolith (qwiklabs-gcp-04-4b254bfee065)$ kubectl set image deployment/monolith monolith=gcr.io/${GOOGLE_CLOUD_PROJECT}/monolith:3.0.0
+deployment.apps/monolith image updated
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/monolith (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/react-app
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ cp .env.monolith .env
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ npm run build
+
+> frontend@0.1.0 prebuild
+> npm run build:monolith
+
+
+> frontend@0.1.0 build:monolith
+> env-cmd -f .env.monolith react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  79.08 KB  build/static/js/2.99058a84.chunk.js
+  2.02 KB   build/static/js/main.d09e654d.chunk.js
+  770 B     build/static/js/runtime-main.c8a21426.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  bit.ly/CRA-deploy
+
+
+> frontend@0.1.0 postbuild:monolith
+> node scripts/post-build.js ./build ../monolith/public
+
+Deleting stale folder: ../monolith/public
+Deleted stale destination folder: ../monolith/public
+Copying files from ./build to ../monolith/public
+Copied ./build to ../monolith/public successfully!
+
+> frontend@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  79.08 KB  build/static/js/2.99058a84.chunk.js
+  2.02 KB   build/static/js/main.d09e654d.chunk.js
+  770 B     build/static/js/runtime-main.c8a21426.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  npm install -g serve
+  serve -s build
+
+Find out more about deployment here:
+
+  bit.ly/CRA-deploy
+
+
+> frontend@0.1.0 postbuild
+> node scripts/post-build.js ./build ../microservices/src/frontend/public
+
+Deleting stale folder: ../microservices/src/frontend/public
+Deleted stale destination folder: ../microservices/src/frontend/public
+Copying files from ./build to ../microservices/src/frontend/public
+Copied ./build to ../microservices/src/frontend/public successfully!
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/react-app (qwiklabs-gcp-04-4b254bfee065)$ cd ~/monolith-to-microservices/microservices/src/frontend
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$ gcloud builds submit --tag gcr.io/${GOOGLE_CLOUD_PROJECT}/frontend:1.0.0 .
+Creating temporary tarball archive of 31 file(s) totalling 2.3 MiB before compression.
+Uploading tarball of [.] to [gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122468.863939-193d3108e11d4083a7d6ec79795f0725.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/qwiklabs-gcp-04-4b254bfee065/locations/global/builds/1ac0b7d0-7e55-467b-963d-be241d45d6eb].
+Logs are available at [https://console.cloud.google.com/cloud-build/builds/1ac0b7d0-7e55-467b-963d-be241d45d6eb?project=414314916648].
+----------------------------------------------------------------------------------------------------------- REMOTE BUILD OUTPUT -----------------------------------------------------------------------------------------------------------
+starting build "1ac0b7d0-7e55-467b-963d-be241d45d6eb"
+
+FETCHSOURCE
+Fetching storage object: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122468.863939-193d3108e11d4083a7d6ec79795f0725.tgz#1643122470266636
+Copying gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122468.863939-193d3108e11d4083a7d6ec79795f0725.tgz#1643122470266636...
+/ [1 files][  1.4 MiB/  1.4 MiB]
+Operation completed over 1 objects/1.4 MiB.
+BUILD
+Already have image (with digest): gcr.io/cloud-builders/docker
+Sending build context to Docker daemon  2.488MB
+Step 1/7 : FROM node:10
+10: Pulling from library/node
+76b8ef87096f: Pulling fs layer
+2e2bafe8a0f4: Pulling fs layer
+b53ce1fd2746: Pulling fs layer
+84a8c1bd5887: Pulling fs layer
+7a803dc0b40f: Pulling fs layer
+b800e94e7303: Pulling fs layer
+0da9fbf60d48: Pulling fs layer
+04dccde934cf: Pulling fs layer
+73269890f6fd: Pulling fs layer
+84a8c1bd5887: Waiting
+7a803dc0b40f: Waiting
+b800e94e7303: Waiting
+0da9fbf60d48: Waiting
+04dccde934cf: Waiting
+73269890f6fd: Waiting
+b53ce1fd2746: Verifying Checksum
+b53ce1fd2746: Download complete
+2e2bafe8a0f4: Download complete
+76b8ef87096f: Verifying Checksum
+76b8ef87096f: Download complete
+b800e94e7303: Verifying Checksum
+b800e94e7303: Download complete
+84a8c1bd5887: Verifying Checksum
+84a8c1bd5887: Download complete
+04dccde934cf: Verifying Checksum
+04dccde934cf: Download complete
+73269890f6fd: Verifying Checksum
+73269890f6fd: Download complete
+0da9fbf60d48: Verifying Checksum
+0da9fbf60d48: Download complete
+7a803dc0b40f: Verifying Checksum
+7a803dc0b40f: Download complete
+76b8ef87096f: Pull complete
+2e2bafe8a0f4: Pull complete
+b53ce1fd2746: Pull complete
+84a8c1bd5887: Pull complete
+7a803dc0b40f: Pull complete
+b800e94e7303: Pull complete
+0da9fbf60d48: Pull complete
+04dccde934cf: Pull complete
+73269890f6fd: Pull complete
+Digest: sha256:59531d2835edd5161c8f9512f9e095b1836f7a1fcb0ab73e005ec46047384911
+Status: Downloaded newer image for node:10
+ 28dca6642db8
+Step 2/7 : WORKDIR /usr/src/app
+ Running in 6eb65630b0c3
+Removing intermediate container 6eb65630b0c3
+ 874ac0f5625f
+Step 3/7 : COPY package*.json ./
+ 62b441c8b05f
+Step 4/7 : RUN npm install
+ Running in f35c31eb8c64
+npm WARN frontend@1.0.0 No description
+npm WARN frontend@1.0.0 No repository field.
+
+added 50 packages from 37 contributors and audited 50 packages in 2.034s
+found 0 vulnerabilities
+Removing intermediate container f35c31eb8c64
+ 834633268b59
+Step 5/7 : COPY . .
+ 782b6db9dc03
+Step 6/7 : EXPOSE 8080
+ Running in 2ba1ccacbc04
+Removing intermediate container 2ba1ccacbc04
+ 831c4bd4ddf4
+Step 7/7 : CMD [ "node", "server.js" ]
+ Running in 453bbeb8e918
+Removing intermediate container 453bbeb8e918
+ 055fdc2c6687
+Successfully built 055fdc2c6687
+Successfully tagged gcr.io/qwiklabs-gcp-04-4b254bfee065/frontend:1.0.0
+PUSH
+Pushing gcr.io/qwiklabs-gcp-04-4b254bfee065/frontend:1.0.0
+The push refers to repository [gcr.io/qwiklabs-gcp-04-4b254bfee065/frontend]
+97c363cbc4e7: Preparing
+715d0cb1bafc: Preparing
+9b5ea78a6a9f: Preparing
+92af6da8c3a8: Preparing
+3ab01e8988bf: Preparing
+c98dc9a94132: Preparing
+3ffdb7e28503: Preparing
+33dd93485756: Preparing
+607d71c12b77: Preparing
+052174538f53: Preparing
+8abfe7e7c816: Preparing
+c8b886062a47: Preparing
+16fc2e3ca032: Preparing
+33dd93485756: Waiting
+607d71c12b77: Waiting
+052174538f53: Waiting
+8abfe7e7c816: Waiting
+c8b886062a47: Waiting
+16fc2e3ca032: Waiting
+c98dc9a94132: Waiting
+3ffdb7e28503: Waiting
+3ab01e8988bf: Layer already exists
+c98dc9a94132: Layer already exists
+3ffdb7e28503: Layer already exists
+33dd93485756: Layer already exists
+607d71c12b77: Layer already exists
+052174538f53: Layer already exists
+8abfe7e7c816: Layer already exists
+c8b886062a47: Layer already exists
+16fc2e3ca032: Layer already exists
+92af6da8c3a8: Pushed
+9b5ea78a6a9f: Pushed
+715d0cb1bafc: Pushed
+97c363cbc4e7: Pushed
+1.0.0: digest: sha256:abf2f0ed2c79473a497a056ef27582f26d0d658e927ae71e401a73508fbb4e93 size: 3052
+DONE
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ID: 1ac0b7d0-7e55-467b-963d-be241d45d6eb
+CREATE_TIME: 2022-01-25T14:54:30+00:00
+DURATION: 43S
+SOURCE: gs://qwiklabs-gcp-04-4b254bfee065_cloudbuild/source/1643122468.863939-193d3108e11d4083a7d6ec79795f0725.tgz
+IMAGES: gcr.io/qwiklabs-gcp-04-4b254bfee065/frontend:1.0.0
+STATUS: SUCCESS
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$ kubectl create deployment frontend --image=gcr.io/${GOOGLE_CLOUD_PROJECT}/frontend:1.0.0
+deployment.apps/frontend created
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$ kubectl expose deployment frontend --type=LoadBalancer --port 80 --target-port 8080
+service/frontend exposed
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$ kubectl delete deployment monolith
+deployment.apps "monolith" deleted
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$ kubectl delete service monolith
+service "monolith" deleted
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$ kubectl get services
+NAME         TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)        AGE
+frontend     LoadBalancer   10.20.1.145   34.71.246.174    80:32511/TCP   68s
+kubernetes   ClusterIP      10.20.0.1     <none>           443/TCP        18m
+orders       LoadBalancer   10.20.5.19    35.232.113.226   80:30460/TCP   12m
+products     LoadBalancer   10.20.1.13    34.68.217.136    80:31308/TCP   6m20s
+student_04_f5cf4baa315f@cloudshell:~/monolith-to-microservices/microservices/src/frontend (qwiklabs-gcp-04-4b254bfee065)$
